@@ -11,23 +11,69 @@ Your goal is to:
 - Evaluate what your system gets right and wrong
 - Reflect on how this mirrors real world AI recommenders
 
-Replace this paragraph with your own summary of what your version does.
+This simulation builds a content-based music recommender that scores songs against a user's taste profile and returns the top matches with plain-language explanations.
 
 ---
 
 ## How The System Works
 
-Explain your design in plain language.
+Real-world platforms like Spotify and YouTube combine two strategies: **collaborative filtering** (recommending what similar users liked) and **content-based filtering** (matching songs by their audio attributes). This simulation focuses on content-based filtering — comparing song features directly to what the user prefers.
 
-Some prompts to answer:
+This version prioritizes **genre** and **mood** as the strongest taste signals, then uses **proximity scoring** on numerical features (energy, valence) to reward songs that are *close* to the user's preference rather than simply high or low.
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
-- How do you choose which songs to recommend
+### `Song` features used
 
-You can include a simple diagram or bullet list if helpful.
+| Feature | Type | Role in scoring |
+|---|---|---|
+| `genre` | categorical | Highest weight (0.35) — strongest taste filter |
+| `mood` | categorical | Second weight (0.25) — emotional context |
+| `energy` | float 0–1 | Proximity score, weight 0.25 |
+| `valence` | float 0–1 | Proximity score, weight 0.15 |
+| `tempo_bpm` | float | Stored but not yet scored |
+| `danceability` | float | Stored but not yet scored |
+| `acousticness` | float | Stored but not yet scored |
+
+### `UserProfile` stores
+
+- `favorite_genre` — preferred genre string
+- `favorite_mood` — preferred mood string
+- `target_energy` — desired energy level (0–1)
+- `likes_acoustic` — boolean preference for acoustic sound
+
+### How a score is computed (Algorithm Recipe (Scoring Rule))
+
+Each song is scored against the user profile using this point system:
+
+| Rule | Points |
+|---|---|
+| Genre matches user's `favorite_genre` | +2.0 |
+| Mood matches user's `favorite_mood` | +1.0 |
+| Energy similarity: `1 − │song.energy − target_energy│` | +0.0 to +1.0 |
+| Valence similarity: `(1 − │song.valence − target_valence│) × 0.5` | +0.0 to +0.5 |
+
+**Max possible score: 4.5** — a perfect genre + mood + energy + valence match.
+
+### Data Flow
+
+```mermaid
+flowchart TD
+    A([User Preferences\ngenre · mood · energy · valence]) --> B[Load songs.csv]
+    B --> C{For each song in catalog}
+    C --> D[Score the song\n+2.0 genre · +1.0 mood\n+energy sim · +valence sim]
+    D --> C
+    C --> E[Sort all songs by score descending]
+    E --> F([Top K Recommendations\nwith explanation])
+```
+
+### How songs are ranked and chosen
+
+All songs are scored, sorted descending, and the top `k` (default 5) are returned with an explanation listing which features contributed.
+
+### Expected Biases
+
+- **Genre over-weighting**: At +2.0, genre dominates. A perfect mood+energy+valence match (max 2.5 pts) can still lose to a bare genre match (2.0 pts) — the system may ignore great cross-genre songs.
+- **Mood mismatch penalty**: If the user's mood isn't in the catalog (e.g., "nostalgic"), no song gets the +1.0 boost and all results look equally flat.
+- **Popularity blind spot**: This is pure content-based — it cannot detect that a song is universally loved or hated, only that it matches attributes.
 
 ---
 
