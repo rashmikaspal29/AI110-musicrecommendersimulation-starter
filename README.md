@@ -17,16 +17,16 @@ This simulation builds a content-based music recommender that scores songs again
 
 ## How The System Works
 
-Real-world platforms like Spotify and YouTube combine two strategies: **collaborative filtering** (recommending what similar users liked) and **content-based filtering** (matching songs by their audio attributes). This simulation focuses on content-based filtering — comparing song features directly to what the user prefers.
+Real-world platforms like Spotify and YouTube combine two strategies: **collaborative filtering** (recommending what similar users liked) and **content-based filtering** (matching songs by their audio attributes). This simulation focuses on content-based filtering, comparing song features directly to what the user prefers.
 
-This version prioritizes **genre** and **mood** as the strongest taste signals, then uses **proximity scoring** on numerical features (energy, valence) to reward songs that are *close* to the user's preference rather than simply high or low.
+This version prioritizes **genre** and **mood** as the strongest taste signals, then uses **proximity scoring** on numerical features (energy, valence) to reward songs that are close to the user's preference rather than simply high or low.
 
 ### `Song` features used
 
 | Feature | Type | Role in scoring |
 |---|---|---|
-| `genre` | categorical | Highest weight (0.35) — strongest taste filter |
-| `mood` | categorical | Second weight (0.25) — emotional context |
+| `genre` | categorical | Highest weight (0.35), strongest taste filter |
+| `mood` | categorical | Second weight (0.25), emotional context |
 | `energy` | float 0–1 | Proximity score, weight 0.25 |
 | `valence` | float 0–1 | Proximity score, weight 0.15 |
 | `tempo_bpm` | float | Stored but not yet scored |
@@ -35,10 +35,10 @@ This version prioritizes **genre** and **mood** as the strongest taste signals, 
 
 ### `UserProfile` stores
 
-- `favorite_genre` — preferred genre string
-- `favorite_mood` — preferred mood string
-- `target_energy` — desired energy level (0–1)
-- `likes_acoustic` — boolean preference for acoustic sound
+- `favorite_genre`, preferred genre string
+- `favorite_mood`, preferred mood string
+- `target_energy`, desired energy level (0 to 1)
+- `likes_acoustic`, boolean preference for acoustic sound
 
 ### How a score is computed (Algorithm Recipe (Scoring Rule))
 
@@ -51,7 +51,7 @@ Each song is scored against the user profile using this point system:
 | Energy similarity: `1 − │song.energy − target_energy│` | +0.0 to +1.0 |
 | Valence similarity: `(1 − │song.valence − target_valence│) × 0.5` | +0.0 to +0.5 |
 
-**Max possible score: 4.5** — a perfect genre + mood + energy + valence match.
+**Max possible score: 4.5**, a perfect genre + mood + energy + valence match.
 
 ### Data Flow
 
@@ -71,13 +71,18 @@ All songs are scored, sorted descending, and the top `k` (default 5) are returne
 
 ### Expected Biases
 
-- **Genre over-weighting**: At +2.0, genre dominates. A perfect mood+energy+valence match (max 2.5 pts) can still lose to a bare genre match (2.0 pts) — the system may ignore great cross-genre songs.
-- **Mood mismatch penalty**: If the user's mood isn't in the catalog (e.g., "nostalgic"), no song gets the +1.0 boost and all results look equally flat.
-- **Popularity blind spot**: This is pure content-based — it cannot detect that a song is universally loved or hated, only that it matches attributes.
+- **Genre over-weighting**: At +2.0, genre dominates. A perfect mood+energy+valence match (max 2.5 pts) can still lose to a bare genre match (2.0 pts), so the system may miss great cross-genre songs.
+- **Mood mismatch penalty**: If the user's mood is not in the catalog (e.g., "nostalgic"), no song gets the +1.0 boost and all results look equally flat.
+- **Popularity blind spot**: This is pure content-based, so it cannot detect that a song is universally loved or hated, only that it matches attributes.
 
 ### Sample Terminal Output
 
-![alt text](image.png)
+![Initial pop/happy profile recommendations](image.png)
+![High-Energy Pop recommendations](image-1.png)
+![Chill Lofi recommendations](image-2.png)
+![Deep Intense Rock](image-3.png)
+![Adversarial recommendations](image-4.png)
+
 
 
 ---
@@ -147,10 +152,9 @@ Read and complete `model_card.md`:
 
 [**Model Card**](model_card.md)
 
-Write 1 to 2 paragraphs here about what you learned:
+Building this project made me realize that a recommender system is really just a set of rules for comparing things, and the weights you choose matter more than you would expect. I always assumed these systems were doing something deeply complex under the hood, but at the core it is just scoring each song against what the user wants and picking the best matches. What surprised me most is how reasonable the results felt even with such a simple approach.
 
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
+The bias side of things was eye-opening too. Because genre carries the most weight, the system kept pushing users toward the same genre over and over, even when a song from a different genre might have felt just as right. That is exactly how real platforms can trap you in a listening bubble without you noticing. The adversarial profile really drove this home since the system confidently recommended a song that sounded nothing like what the user actually wanted, just because the genre label matched. It made me much more aware of how the decisions behind a scoring function quietly shape what people get to discover.
 
 
 ---
