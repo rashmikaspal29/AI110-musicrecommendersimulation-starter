@@ -75,6 +75,11 @@ All songs are scored, sorted descending, and the top `k` (default 5) are returne
 - **Mood mismatch penalty**: If the user's mood isn't in the catalog (e.g., "nostalgic"), no song gets the +1.0 boost and all results look equally flat.
 - **Popularity blind spot**: This is pure content-based — it cannot detect that a song is universally loved or hated, only that it matches attributes.
 
+### Sample Terminal Output
+
+![alt text](image.png)
+
+
 ---
 
 ## Getting Started
